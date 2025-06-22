@@ -2,14 +2,46 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Delete;
+use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Post;
 use App\Repository\UserRepository;
+use App\State\UserLoginProcessor;
+use App\State\UserRegistrationProcessor;
 use Doctrine\ORM\Mapping as ORM;
+use Lexik\Bundle\JWTAuthenticationBundle\Response\JWTAuthenticationSuccessResponse;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: '`user`')]
-#[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
+#[ApiResource(
+    operations: [
+        new Post(
+            uriTemplate: 'registration',
+            denormalizationContext: ['groups' => ['user:register']],
+            validationContext: ['groups' => ['user:register']],
+            name: 'api_register',
+            processor: UserRegistrationProcessor::class
+        ),
+        new Post(
+            uriTemplate: 'authentication',
+            denormalizationContext: ['groups' => ['user:auth']],
+            output: JWTAuthenticationSuccessResponse::class,
+            name: 'api_login',
+            processor: UserLoginProcessor::class
+        ),
+        new Patch(
+            denormalizationContext: ['groups' => ['user:update']],
+            security: 'object == user',
+        ),
+        new Delete(security: 'is_granted(\"ROLE_ADMIN\")')
+    ],
+    normalizationContext: ['groups' => ['basic', 'user:read']],
+)]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
@@ -17,23 +49,36 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(length: 180)]
+    #[ORM\Column(length: 180, unique: true)]
+    #[Assert\NotBlank]
+    #[Assert\Email]
+    #[Groups(['basic', 'user:register', 'user:auth'])]
     private ?string $email = null;
 
     #[ORM\Column]
+    #[Groups(['user:read'])]
     private array $roles = [];
 
     #[ORM\Column]
+    #[Assert\NotBlank()]
+    #[Groups(['user:register'])]
     private ?string $password = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank]
+    #[Groups(['basic', 'user:register'])]
     private ?string $fullname = null;
 
     #[ORM\Column(length: 16, nullable: true)]
+    #[Groups(['basic', 'user:register'])]
     private ?string $phone = null;
 
     #[ORM\Column(length: 32, nullable: true)]
+    #[Groups(['user:read', 'user:register'])]
     private ?string $birthdate = null;
+
+    #[ORM\OneToOne(mappedBy: 'profile', cascade: ['persist'])]
+    private ?Doctor $doctor = null;
 
     public function getId(): ?int
     {
@@ -48,45 +93,27 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setEmail(string $email): static
     {
         $this->email = $email;
-
         return $this;
     }
 
-    /**
-     * A visual identifier that represents this user.
-     *
-     * @see UserInterface
-     */
     public function getUserIdentifier(): string
     {
-        return (string) $this->email;
+        return (string)$this->email;
     }
 
-    /**
-     * @see UserInterface
-     */
     public function getRoles(): array
     {
         $roles = $this->roles;
-        // guarantee every user at least has ROLE_USER
         $roles[] = 'ROLE_USER';
-
         return array_unique($roles);
     }
 
-    /**
-     * @param list<string> $roles
-     */
     public function setRoles(array $roles): static
     {
         $this->roles = $roles;
-
         return $this;
     }
 
-    /**
-     * @see PasswordAuthenticatedUserInterface
-     */
     public function getPassword(): ?string
     {
         return $this->password;
@@ -95,17 +122,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setPassword(string $password): static
     {
         $this->password = $password;
-
         return $this;
     }
 
-    /**
-     * @see UserInterface
-     */
     public function eraseCredentials(): void
     {
-        // If you store any temporary, sensitive data on the user, clear it here
-        // $this->plainPassword = null;
     }
 
     public function getFullname(): ?string
@@ -116,7 +137,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setFullname(string $fullname): static
     {
         $this->fullname = $fullname;
-
         return $this;
     }
 
@@ -128,7 +148,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setPhone(?string $phone): static
     {
         $this->phone = $phone;
-
         return $this;
     }
 
@@ -140,7 +159,20 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setBirthdate(?string $birthdate): static
     {
         $this->birthdate = $birthdate;
+        return $this;
+    }
 
+    public function getDoctor(): ?Doctor
+    {
+        return $this->doctor;
+    }
+
+    public function setDoctor(?Doctor $doctor): static
+    {
+        if ($doctor !== null && $doctor->getProfile() !== $this) {
+            $doctor->setProfile($this);
+        }
+        $this->doctor = $doctor;
         return $this;
     }
 }
