@@ -35,6 +35,11 @@ class Specialty
     #[ORM\Column(length: 255)]
     private ?string $externalId = null;
 
+    public function __toString(): string
+    {
+        return $this->getTitle() ?? 'Новый';
+    }
+
     public function getId(): ?int
     {
         return $this->id;

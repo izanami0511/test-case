@@ -60,7 +60,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private array $roles = [];
 
     #[ORM\Column]
-    #[Assert\NotBlank()]
     #[Groups(['user:register'])]
     private ?string $password = null;
 
@@ -79,6 +78,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\OneToOne(mappedBy: 'profile', cascade: ['persist'])]
     private ?Doctor $doctor = null;
+
+    private ?string $plainPassword = null;
+
+    public function __toString(): string
+    {
+        return $this->getFullname() ?? 'Новый';
+    }
 
     public function getId(): ?int
     {
@@ -173,6 +179,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
             $doctor->setProfile($this);
         }
         $this->doctor = $doctor;
+        return $this;
+    }
+
+    public function getPlainPassword(): ?string
+    {
+        return $this->plainPassword;
+    }
+
+    public function setPlainPassword(?string $plainPassword): static
+    {
+        $this->plainPassword = $plainPassword;
         return $this;
     }
 }

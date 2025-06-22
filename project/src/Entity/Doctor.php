@@ -54,6 +54,11 @@ class Doctor
     #[ApiProperty(writableLink: false, example: '/api/specialties/{id}')]
     private ?Specialty $specialty = null;
 
+    public function __toString(): string
+    {
+        return $this->getProfile()->getFullname() ?? 'Новый';
+    }
+
     public function getId(): ?int
     {
         return $this->id;
