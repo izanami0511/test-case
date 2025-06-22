@@ -1,0 +1,8 @@
+# phpstorm project files
+.idea
+/.env
+
+/volumes
+/dumps
+
+/project/public/uploads

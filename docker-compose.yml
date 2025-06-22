@@ -1,0 +1,58 @@
+version: '3'
+
+services:
+  nginx:
+    container_name: ${APP_NAME}-nginx
+    build:
+      context: ./docker/nginx
+    restart: always
+    depends_on:
+      - php-fpm
+    command: nginx -g 'daemon off;'
+    volumes:
+      - ./project/public:/project/public
+    ports:
+      - "8055:80"
+
+
+  db:
+    container_name: ${APP_NAME}-db
+    image: mariadb:10.11
+    ports:
+      - "3355:3306"
+    restart: always
+    environment:
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_DATABASE=${MYSQL_DB}
+      - MARIADB_ROOT_PASSWORD=${MYSQL_ROOT}
+      - TZ=Europe/Moscow
+    command: [ 'mysqld', '--character-set-server=utf8mb4', '--collation-server=utf8mb4_unicode_ci' ]
+    volumes:
+      - ./volumes/db/mysql://var/lib/mysql
+
+  php-fpm:
+    container_name: ${APP_NAME}-php-fpm
+    build:
+      context: ./docker/php-fpm
+    depends_on:
+      - db
+    volumes:
+      - ./project:/project:delegated
+
+  php-cli:
+    container_name: ${APP_NAME}-php-cli
+    stop_grace_period: 1s
+    build:
+      context: ./docker/php-fpm
+    depends_on:
+      - db
+    volumes:
+      - ./project:/project:delegated
+
+  node-cli:
+    container_name: ${APP_NAME}-node-cli
+    build:
+      context: ./docker/node-cli
+    volumes:
+      - ./project:/project:delegated
