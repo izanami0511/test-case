@@ -56,3 +56,9 @@ services:
       context: ./docker/node-cli
     volumes:
       - ./project:/project:delegated
+
+  mail-catcher:
+    image: schickling/mailcatcher
+    container_name: ${APP_NAME}-mailer
+    ports:
+      - "1055:1080"

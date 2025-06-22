@@ -1,0 +1,20 @@
+<container>
+    <row>
+        <columns>
+            <spacer size="16"></spacer>
+
+            <h1>Вы успешно зарегистрировались</h1>
+
+            <spacer size="16"></spacer>
+
+            <callout class="primary">
+                <p><strong>Имя:</strong> {{user.fullname }}</p>
+                <p><strong>Телефон:</strong> {{ user.phone }}</p>
+                <p><strong>Почта:</strong> {{ user.email }}</p>
+                <p><strong>Дата рождения:</strong> {{ user.birthdate }}</p>
+            </callout>
+
+            <spacer size="16"></spacer>
+        </columns>
+    </row>
+</container>

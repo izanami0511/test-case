@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\Post;
 use App\Repository\DoctorRepository;
 use App\State\DoctorRegistrationProcessor;
@@ -21,6 +22,7 @@ use Symfony\Component\Serializer\Attribute\Groups;
             name: 'api_doctor_register',
             processor: DoctorRegistrationProcessor::class
         ),
+        new Get()
     ],
     normalizationContext: ['groups' => ['basic', 'doctor:read']],
 )]
@@ -40,20 +42,17 @@ class Doctor
     #[Groups(['user:register', 'doctor:register'])]
     private ?User $profile = null;
 
-    #[ORM\Column(length: 255)]
-    #[Groups(['doctor:read', 'doctor:register'])]
-    private ?string $speciality = null;
-
-    #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['doctor:read', 'doctor:register'])]
-    private ?string $description = null;
-
     #[ORM\Column(nullable: true)]
     #[Groups(['doctor:read', 'doctor:register'])]
     #[ApiProperty(
         example: '[{"dayOfWeek":"monday","timeSlots":["09:00-12:00","14:00-18:00"]}]'
     )]
     private ?array $schedule = null;
+
+    #[ORM\ManyToOne]
+    #[Groups(['doctor:register'])]
+    #[ApiProperty(writableLink: false, example: '/api/specialties/{id}')]
+    private ?Specialty $specialty = null;
 
     public function getId(): ?int
     {
@@ -72,30 +71,6 @@ class Doctor
         return $this;
     }
 
-    public function getSpeciality(): ?string
-    {
-        return $this->speciality;
-    }
-
-    public function setSpeciality(string $speciality): static
-    {
-        $this->speciality = $speciality;
-
-        return $this;
-    }
-
-    public function getDescription(): ?string
-    {
-        return $this->description;
-    }
-
-    public function setDescription(?string $description): static
-    {
-        $this->description = $description;
-
-        return $this;
-    }
-
     public function getSchedule(): ?array
     {
         return $this->schedule;
@@ -104,6 +79,23 @@ class Doctor
     public function setSchedule(?array $schedule): static
     {
         $this->schedule = $schedule;
+
+        return $this;
+    }
+
+    public function getMail(): string
+    {
+        return $this->getProfile()->getEmail();
+    }
+
+    public function getSpecialty(): ?Specialty
+    {
+        return $this->specialty;
+    }
+
+    public function setSpecialty(?Specialty $specialty): static
+    {
+        $this->specialty = $specialty;
 
         return $this;
     }

@@ -1,0 +1,22 @@
+<container>
+    <row>
+        <columns>
+            <spacer size="16"></spacer>
+
+            <h1>Новая запись на прием</h1>
+
+            <spacer size="16"></spacer>
+
+            <callout class="primary">
+                <p><strong>Имя:</strong> {{ appointment.user.fullname }}</p>
+                <p><strong>Телефон:</strong> {{ appointment.user.phone }}</p>
+                <p><strong>Почта:</strong> {{ appointment.user.email }}</p>
+                <p><strong>Дата визита:</strong> {{ appointment.visitDate|date('d.m.Y H:i') }}</p>
+            </callout>
+
+            <spacer size="16"></spacer>
+
+            <p>Запись создана: {{ appointment.createdAt|date('d.m.Y H:i') }}</p>
+        </columns>
+    </row>
+</container>

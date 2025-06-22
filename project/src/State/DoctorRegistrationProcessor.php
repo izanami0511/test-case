@@ -6,6 +6,7 @@ use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProcessorInterface;
 use App\Entity\Doctor;
 use App\Entity\User;
+use App\Service\MailService;
 use Doctrine\ORM\EntityManagerInterface;
 use Lexik\Bundle\JWTAuthenticationBundle\Security\Http\Authentication\AuthenticationSuccessHandler;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
@@ -15,7 +16,8 @@ class DoctorRegistrationProcessor implements ProcessorInterface
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly UserPasswordHasherInterface $passwordHasher,
-        private readonly AuthenticationSuccessHandler $successHandler
+        private readonly AuthenticationSuccessHandler $successHandler,
+        private readonly MailService $mailService,
     )
     {
     }
@@ -43,6 +45,7 @@ class DoctorRegistrationProcessor implements ProcessorInterface
             $this->em->persist($user);
             $this->em->persist($data);
             $this->em->flush();
+            $this->mailService->sendMail($user);
 
             return $this->successHandler->handleAuthenticationSuccess($user);
         }

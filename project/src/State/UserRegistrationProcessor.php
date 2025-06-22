@@ -5,6 +5,7 @@ namespace App\State;
 use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProcessorInterface;
 use App\Entity\User;
+use App\Service\MailService;
 use Lexik\Bundle\JWTAuthenticationBundle\Security\Http\Authentication\AuthenticationSuccessHandler;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
@@ -15,7 +16,8 @@ class UserRegistrationProcessor implements ProcessorInterface
         #[Autowire(service: 'api_platform.doctrine.orm.state.persist_processor')]
         private readonly ProcessorInterface $persistProcessor,
         private readonly UserPasswordHasherInterface $passwordHasher,
-        private readonly AuthenticationSuccessHandler $authenticationSuccessHandler
+        private readonly AuthenticationSuccessHandler $authenticationSuccessHandler,
+        private readonly MailService $mailService,
     )
     {}
 
@@ -33,6 +35,7 @@ class UserRegistrationProcessor implements ProcessorInterface
         $data->setRoles(['ROLE_USER']);
 
         $result = $this->persistProcessor->process($data, $operation, $uriVariables, $context);
+        $this->mailService->sendMail($data);
 
         return $this->authenticationSuccessHandler->handleAuthenticationSuccess($result);
     }
