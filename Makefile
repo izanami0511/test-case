@@ -1,7 +1,7 @@
 init: docker-down \
 	docker-pull docker-build docker-up \
-	app-composer-install
-
+	app-composer-install \
+	app-migrations
 up: docker-up
 down: docker-down
 restart: down up
